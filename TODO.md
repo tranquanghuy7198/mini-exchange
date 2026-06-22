@@ -140,8 +140,28 @@ Each task has four sections:
   Portfolio owns `portfolios`/`users` (incl. `cash_balance`), `holdings`, `orders`;
   Audit owns `audit_events`. Provide a reusable pool initializer in `shared` and a
   healthcheck query.
-- **Progress:** TODO
+- **Progress:** DONE
 - **Blocker:** None
+- **Outcome:** Added `sqlx` 0.8 (tokio + rustls + postgres + uuid/chrono/decimal
+  - macros + migrate) and `dotenvy`. `shared::db`: `init_pool`, `pool_from_env`
+    (loads `.env`), `ping` (`SELECT 1` healthcheck), and a `readiness_router`
+    exposing `GET /ready` (200 when DB reachable, else 503). **Database-per-service**
+    (decided — see below): per-service migrations in `portfolio-service/migrations`
+    (`users`, `portfolios` incl. `cash_balance` + `reserved_cash`, `holdings`,
+    `orders`; NUMERIC(38,10) + CHECK constraints) and `audit-service/migrations`
+    (`audit_events` with UNIQUE `event_id` for idempotency). Portfolio & audit
+    `main` now connect, run `sqlx::migrate!`, and serve `/health` + `/ready`;
+    market-service stays DB-less.
+- **Note (DB-per-service):** each service owns its own Postgres database
+  (`portfolio`, `audit`), not just its own tables — otherwise the two migration
+  sets would collide on the shared `_sqlx_migrations` table. DBs are created by a
+  `db-init` one-shot service in compose (idempotent `\gexec`); URLs are
+  `PORTFOLIO_DATABASE_URL` / `AUDIT_DATABASE_URL` in `.env`. (A bind-mounted
+  initdb script was tried first but Docker Desktop denied file-sharing for the
+  host path, hence the one-shot service.)
+- **Verified:** build + clippy `-D warnings` clean; `db-init` created both DBs;
+  both services migrated and returned `/ready: ready`; `\dt` shows the expected
+  tables with a separate `_sqlx_migrations` per database.
 
 ## 6. Kafka shared client
 

@@ -28,6 +28,29 @@ services:
       timeout: 5s
       retries: 10
 
+  # One-shot: create the per-service databases (portfolio, audit), then exit.
+  # Idempotent via `\gexec` (CREATE DATABASE has no IF NOT EXISTS).
+  db-init:
+    image: postgres:16-alpine
+    container_name: exchange-db-init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        for db in portfolio audit; do
+          echo "SELECT 'CREATE DATABASE $$db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname='$$db')\gexec" \
+            | psql -h postgres -U ${POSTGRES_USER} -d ${POSTGRES_DB} -v ON_ERROR_STOP=1
+        done
+        echo "Databases ready:"
+        psql -h postgres -U ${POSTGRES_USER} -d ${POSTGRES_DB} -tAc \
+          "SELECT datname FROM pg_database WHERE datname IN ('portfolio','audit') ORDER BY datname"
+    restart: "no"
+
   kafka:
     image: apache/kafka:3.7.0
     container_name: exchange-kafka

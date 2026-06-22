@@ -4,8 +4,10 @@
 //! Populated incrementally by the TODO tasks:
 //! - `error` / `telemetry` / `http` — HTTP stack scaffolding (Task 3) ✅
 //! - `domain` / `events` — domain models + Kafka event schemas (Task 4) ✅
-//! - Kafka producer/consumer + sqlx pool helpers — Tasks 5/6
+//! - `db` — Postgres pool + readiness helpers (Task 5) ✅
+//! - Kafka producer/consumer helpers — Task 6
 
+pub mod db;
 pub mod domain;
 pub mod error;
 pub mod events;

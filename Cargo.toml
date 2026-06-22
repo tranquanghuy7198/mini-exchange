@@ -31,3 +31,15 @@ tower-http = { version = "0.6", features = ["trace"] }
 rust_decimal = { version = "1", features = ["serde"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
+# Postgres (Task 5). sqlx feature flags pull in Type impls for uuid/chrono/decimal.
+sqlx = { version = "0.8", default-features = false, features = [
+    "runtime-tokio",
+    "tls-rustls",
+    "postgres",
+    "uuid",
+    "chrono",
+    "rust_decimal",
+    "macros",
+    "migrate",
+] }
+dotenvy = "0.15"
