@@ -285,8 +285,20 @@ Each task has four sections:
   records `ORDER_CREATED`, `ORDER_EXECUTED`, `ORDER_REJECTED` (and price/compensation
   events) into `audit_events`. Expose a read endpoint to list events for an order.
   Pure consumer — emits no domain events.
-- **Progress:** TODO
+- **Progress:** DONE
 - **Blocker:** None
+- **Outcome:** Pure consumer (group `audit-service`) subscribing to all four saga
+  topics; each event parsed via a minimal `IncomingEnvelope` (event_id, order_id,
+  occurred_at, opaque JSON payload) and recorded into `audit_events` with
+  `event_type` derived from the topic (ORDER_CREATED / PRICE_QUOTED /
+  ORDER_EXECUTED / ORDER_REJECTED). Insert is `ON CONFLICT (event_id) DO NOTHING`
+  → idempotent. Read endpoint `GET /audit/orders/{order_id}` lists events in
+  recorded order (payload stored/returned as JSONB; added sqlx `json` feature).
+  Emits no domain events. Verified with all three services live: a BUY ETH order
+  recorded ORDER_CREATED → PRICE_QUOTED → ORDER_EXECUTED; a BUY ZZZ recorded
+  ORDER_CREATED → ORDER_REJECTED(UNKNOWN_SYMBOL); unknown order → `[]`; replaying
+  a duplicate `event_id` did not create a second row (global invariant: no
+  event_id appears twice). Build + clippy `-D warnings` + tests clean.
 
 ## 11. Testing
 
