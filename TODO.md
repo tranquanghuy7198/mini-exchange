@@ -173,8 +173,20 @@ Each task has four sections:
   shutdown. Define the topic names and partitioning key (key by `order_id` so a
   saga's events stay ordered per order). Provide a small admin step to create
   topics on startup (or via the topic-init container from Task 1).
-- **Progress:** TODO
+- **Progress:** DONE
 - **Blocker:** None
+- **Outcome:** Added `rdkafka` 0.37 (bundled librdkafka built via configure/make —
+  no system lib/cmake needed). `shared::kafka`: `EventProducer` (idempotent,
+  `acks=all`; `send<T: SagaEvent>` serializes the envelope to JSON, publishes to
+  `T::TOPIC` keyed by `order_id`), `EventConsumer` (consumer group, auto-commit
+  off, `auto.offset.reset=earliest`; `run(handler)` commits only on handler `Ok`
+  → at-least-once redelivery, graceful Ctrl-C/SIGTERM shutdown; `recv_event::<T>`
+  typed convenience; `RawEvent` + `deserialize::<T>()` for multi-topic consumers),
+  `ensure_saga_topics` (idempotent admin create), and `brokers_from_env`
+  (`KAFKA_BOOTSTRAP_SERVERS`, default `localhost:9094`). Shutdown logic factored
+  into `shared::signal::shutdown()` (also used by `http::serve`). Verified: build
+  - clippy `-D warnings` clean; `cargo run -p shared --example kafka_roundtrip`
+    produced and consumed a matching `OrderCreated` against the live broker.
 
 ## 7. Implement the Market Service
 

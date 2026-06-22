@@ -19,3 +19,4 @@ uuid.workspace = true
 chrono.workspace = true
 sqlx.workspace = true
 dotenvy.workspace = true
+rdkafka.workspace = true
