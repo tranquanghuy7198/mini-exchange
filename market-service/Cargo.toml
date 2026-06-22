@@ -6,3 +6,7 @@ license.workspace = true
 
 [dependencies]
 shared = { path = "../shared" }
+axum.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+tracing.workspace = true

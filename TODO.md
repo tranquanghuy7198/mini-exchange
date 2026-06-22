@@ -89,8 +89,20 @@ Each task has four sections:
   `tracing` for logging, and `thiserror`/`anyhow` for errors. Add a shared error
   type that maps to HTTP responses. Wire a minimal `GET /health` endpoint into
   each service binary to validate the stack end to end.
-- **Progress:** TODO
+- **Progress:** DONE
 - **Blocker:** None
+- **Outcome:** Stack: `axum` 0.8 + `tokio`, `serde`/`serde_json`, `tracing` +
+  `tracing-subscriber` (RUST_LOG-driven), `tower-http` TraceLayer, `thiserror` +
+  `anyhow`; all pinned in `[workspace.dependencies]`. `shared` crate gained:
+  `error::AppError` (NotFound/BadRequest/Conflict/Unavailable/Internal →
+  404/400/409/503/500) with `IntoResponse` emitting `{ "error": ... }` and hiding
+  internal detail on 5xx, plus `AppResult<T>`; `telemetry::init()`; and
+  `http` with `health_router(service)`, `addr_from_env(var, default)`, and
+  `serve()` (request tracing + graceful shutdown on Ctrl-C/SIGTERM). Each service
+  has an async `main` exposing `GET /health` on a distinct default port
+  (market 8081 / portfolio 8082 / audit 8083, overridable via `*_BIND` env).
+  Verified: `cargo build` + `cargo clippy -D warnings` clean; all three services
+  return `{"status":"ok","service":...}` and shut down gracefully on SIGTERM.
 
 ## 4. Define shared domain models & event schemas
 

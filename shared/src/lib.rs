@@ -1,8 +1,13 @@
 //! Shared library for the Mini Exchange Portfolio System.
 //!
-//! Single source of truth for cross-service contracts. Future tasks populate:
-//! - domain models (`Symbol`, `Price`, `Order`, `Portfolio`, …) — Task 4
-//! - Kafka event envelope + saga event schemas — Task 4
-//! - infra helpers: Kafka producer/consumer, sqlx pool, error types — Tasks 5/6
-//!
-//! Intentionally empty for now (Task 2: buildable skeleton).
+//! Single source of truth for cross-service contracts and infra helpers.
+//! Populated incrementally by the TODO tasks:
+//! - `error` / `telemetry` / `http` — HTTP stack scaffolding (Task 3) ✅
+//! - domain models + Kafka event schemas — Task 4
+//! - Kafka producer/consumer + sqlx pool helpers — Tasks 5/6
+
+pub mod error;
+pub mod http;
+pub mod telemetry;
+
+pub use error::{AppError, AppResult};
