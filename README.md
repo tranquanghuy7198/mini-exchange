@@ -5,9 +5,15 @@ microservices** that communicate **only over Kafka** using the **SAGA
 choreography** pattern (no central orchestrator). Orders are placed over REST and
 resolved asynchronously through a chain of events.
 
-> Built with the help of an AI coding agent — see [AI_USAGE.md](AI_USAGE.md).
-> Original assignment brief: [requirements.md](requirements.md).
-> Step-by-step run/test walkthrough with copy-paste `curl`s: [GUIDELINE.md](GUIDELINE.md).
+> ### 👉 Start with [GUIDELINE.md](GUIDELINE.md)
+>
+> **To run and test the system, follow [GUIDELINE.md](GUIDELINE.md)** — a
+> step-by-step walkthrough (bring up infra → build → run services → seed demo data
+> → copy-paste `curl`s for every scenario → tests → teardown → troubleshooting).
+> This README covers the architecture and design; GUIDELINE is the hands-on guide.
+>
+> Also: built with an AI coding agent — see [AI_USAGE.md](AI_USAGE.md); original
+> assignment brief in [requirements.md](requirements.md).
 
 ---
 
