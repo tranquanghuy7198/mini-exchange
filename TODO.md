@@ -56,7 +56,8 @@ Each task has four sections:
   (`apache/kafka:3.7.0`, KRaft single-node, INTERNAL `kafka:9092` / EXTERNAL
   `localhost:9094`), a `kafka-init` one-shot that creates topics
   (`order-created`, `price-quoted`, `order-executed`, `order-rejected`), plus
-  `kafka-ui` (:8080) and `adminer` (:8081). Settings live in `.env`
+  `kafka-ui` (:8080) and `adminer` (:8085, moved off 8081 to avoid colliding with
+  the Market Service — see Task 12 note). Settings live in `.env`
   (`.env.example` committed). Verified: Postgres healthy + accepts connections,
   Kafka healthy + produce→consume round-trip succeeds, topics created.
   Note: switched off Bitnami images (deprecated/removed from Docker Hub) to the
@@ -336,8 +337,17 @@ portfolio-service -- --ignored` (6 pass); `scripts/e2e.sh` all green; clippy
   healthchecks, and a migration runner. Ensure correct startup ordering
   (Kafka/Postgres healthy before services). Verify `docker compose up` brings up a
   working, end-to-end system.
-- **Progress:** TODO
+- **Progress:** TODO (containerization deferred — running services locally for now)
 - **Blocker:** None
+- **Interim (local-run tooling, per request):** Added a `Makefile` (infra up/down/
+  reset, run each service, `market-fail` for the unavailable path, build/fmt/clippy/
+  test/test-it/e2e, psql helpers) and `GUIDELINE.md` (step-by-step: infra → build →
+  run services → demo seeding → curl scenarios for every README case → tests →
+  teardown → troubleshooting). Bug found & fixed during validation: Adminer's host
+  port collided with the Market Service (both 8081) — moved Adminer to **8085** in
+  `.env`/`.env.example`. Validated the full guideline flow end to end against live
+  infra (symbols/404, BUY EXECUTED, insufficient balance/asset REJECTED, unknown
+  symbol REJECTED, audit trail CREATED→PRICE_QUOTED→EXECUTED).
 
 ## 13. Documentation & deliverables
 
