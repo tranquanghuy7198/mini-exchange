@@ -49,12 +49,17 @@ impl AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let status = self.status();
-        // Log server-side faults; never leak internal detail to the client.
-        if status.is_server_error() {
-            tracing::error!(error = %self, "request failed");
-            return (status, Json(json!({ "error": "internal server error" }))).into_response();
-        }
-        (status, Json(json!({ "error": self.to_string() }))).into_response()
+        // Only `Internal` is masked — it may wrap sensitive detail and is logged
+        // server-side. All other variants carry safe, client-facing messages
+        // (including `Unavailable`/503).
+        let message = match &self {
+            AppError::Internal(e) => {
+                tracing::error!(error = %e, "request failed");
+                "internal server error".to_string()
+            }
+            other => other.to_string(),
+        };
+        (status, Json(json!({ "error": message }))).into_response()
     }
 }
 

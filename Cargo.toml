@@ -46,3 +46,4 @@ dotenvy = "0.15"
 # Kafka client (Task 6). No system librdkafka / cmake here, so rdkafka-sys builds
 # bundled librdkafka via its configure/make path (clang + make + zlib).
 rdkafka = { version = "0.37", features = ["libz", "tokio"] }
+rand = "0.8"

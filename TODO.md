@@ -95,8 +95,9 @@ Each task has four sections:
   `tracing-subscriber` (RUST_LOG-driven), `tower-http` TraceLayer, `thiserror` +
   `anyhow`; all pinned in `[workspace.dependencies]`. `shared` crate gained:
   `error::AppError` (NotFound/BadRequest/Conflict/Unavailable/Internal →
-  404/400/409/503/500) with `IntoResponse` emitting `{ "error": ... }` and hiding
-  internal detail on 5xx, plus `AppResult<T>`; `telemetry::init()`; and
+  404/400/409/503/500) with `IntoResponse` emitting `{ "error": ... }` and masking
+  only the `Internal`/500 message (other variants, incl. 503, show their detail;
+  refined in Task 7), plus `AppResult<T>`; `telemetry::init()`; and
   `http` with `health_router(service)`, `addr_from_env(var, default)`, and
   `serve()` (request tracing + graceful shutdown on Ctrl-C/SIGTERM). Each service
   has an async `main` exposing `GET /health` on a distinct default port
@@ -197,8 +198,21 @@ Each task has four sections:
   Kafka consumer for `OrderCreated`: look up the price and emit `PriceQuoted`,
   or emit `OrderRejected` (reason: unknown symbol / market unavailable) so the
   saga can terminate cleanly. (Enables the "market service failure handling" test.)
-- **Progress:** TODO
+- **Progress:** DONE
 - **Blocker:** None
+- **Outcome:** REST: `GET /symbols`, `GET /prices`, `GET /prices/{symbol}`
+  (404 unknown, 503 unavailable) backed by a mocked `PriceEngine` (static catalog
+  BTC/ETH/SOL/ADA/DOGE with ±2% bounded-random jitter via `rand`, prices as exact
+  Decimals). Saga: consumes `OrderCreated` (group `market-service`) and emits
+  `PriceQuoted` for listed symbols, `OrderRejected{UNKNOWN_SYMBOL}` for unlisted,
+  or `OrderRejected{MARKET_UNAVAILABLE}` for symbols in `MARKET_FAIL_SYMBOLS` (a
+  deterministic failure hook for the market-failure test). HTTP server + Kafka
+  consumer run concurrently and share one shutdown signal. Also refined
+  `AppError::IntoResponse` to mask only `Internal`/500 (503 now shows its detail).
+  Verified: build + clippy `-D warnings` clean; 2 unit tests (price band, unknown);
+  REST endpoints return expected data + status codes; against the live broker,
+  produced `OrderCreated` → observed `PriceQuoted` (ETH), `OrderRejected`
+  (UNKNOWN_SYMBOL for ZZZ), and `OrderRejected` (MARKET_UNAVAILABLE with fail hook).
 
 ## 8. Implement the Portfolio Service — read endpoints
 
