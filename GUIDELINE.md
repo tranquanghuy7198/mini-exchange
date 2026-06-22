@@ -120,6 +120,17 @@ Listed tradable symbols (from the Market Service): **BTC, ETH, SOL, ADA, DOGE**.
 
 ## Step 4 — Exercise the API with curl
 
+> **These scenarios assume the pristine demo state** (`100000.00` cash + `1.0 BTC`).
+> The `portfolio` database **persists across runs**, so once you've placed orders
+> the balances change. To return to the clean starting state at any time:
+>
+> ```bash
+> make infra-reset && make infra-up    # wipes all data; demo is reseeded when you restart `make portfolio`
+> ```
+>
+> Alternatively, check the live balances with `GET /portfolio/$DEMO` (§4.1) and
+> adjust the quantities below to what you actually hold.
+
 Set a couple of shell variables first:
 
 ```bash
@@ -174,8 +185,12 @@ curl -s $PORT/portfolio/$DEMO          # cash reduced by 2 x price, ETH holding 
 
 ### 4.3 Successful SELL ✅ (README: "Successful SELL")
 
+Sell **no more than you currently hold** — on the pristine demo state that's
+`1.0 BTC`, so `0.5` works. (If you've already traded, check §4.1 first; selling
+more than you hold lands in §4.5 instead.)
+
 ```bash
-place SELL BTC 0.5
+place SELL BTC 0.5 # replace 0.5 here with the amount which is less than your current BTC balance
 # ... "status":"EXECUTED" ...
 curl -s $PORT/portfolio/$DEMO          # cash increased, BTC holding -0.5
 ```
