@@ -357,5 +357,13 @@ portfolio-service -- --ignored` (6 pass); `scripts/e2e.sh` all green; clippy
   `AI_USAGE.md` covering tools used, key prompts, tasks delegated to AI, accepted
   vs. modified output, and at least one example of incorrect AI output and how it
   was handled.
-- **Progress:** TODO
+- **Progress:** INPROGRESS
 - **Blocker:** None
+- **Outcome:** New `README.md` written from `requirements.md` (the original brief,
+  renamed): overview, services table, component + saga-flow diagrams, topic/event
+  contract map, lifecycle, tech stack, design decisions, setup/quick-start, API
+  summary, test instructions, teardown, and a deliverables map. `AI_USAGE.md`
+  written with Tools used / Key prompts / Tasks delegated filled in; the two
+  sections **"What was accepted vs. modified"** and **"Example of incorrect AI
+  output…"** are intentionally left empty (placeholder comments) for the user to
+  complete after manual testing.
