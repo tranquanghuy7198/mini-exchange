@@ -6,6 +6,25 @@ central orchestrator. Each service reacts to events and emits new events; the
 order lifecycle is advanced step by step by the services themselves, with
 compensating actions on failure.
 
+**Repository layout (DECIDED — do not revisit):** a single **Cargo workspace**
+with one **independent crate per service** plus a `shared` library crate. NOT one
+big binary, and NOT separate disconnected Rust projects. Each service crate is its
+own binary → its own Docker image → independently deployable/scalable, preserving
+the microservice boundary at runtime. The `shared` crate is the single source of
+truth for domain models + Kafka event schemas (so producer/consumer contracts
+can't drift) and for shared infra helpers (Kafka producer/consumer, sqlx pool,
+error types). Layout:
+
+```
+coinmy-test/
+├── Cargo.toml            # [workspace] members = [...]
+├── shared/               # domain models + Kafka event envelope/schemas + infra helpers
+├── market-service/       # own binary, own Dockerfile
+├── portfolio-service/    # own binary, own Dockerfile
+├── audit-service/        # own binary, own Dockerfile (optional)
+└── docker-compose.yml    # infrastructure (Task 1), extended with services (Task 12)
+```
+
 Tasks are ordered so that dependencies only flow forward: a lower-numbered task
 is never blocked by a higher-numbered one. Implement them top to bottom.
 
