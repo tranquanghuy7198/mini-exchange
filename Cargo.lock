@@ -1196,6 +1196,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "rust_decimal",
+ "serde_json",
  "shared",
  "sqlx",
  "tokio",

@@ -252,8 +252,31 @@ Each task has four sections:
     (release any reservation) and mark the order `REJECTED`.
   - Make consumers **idempotent** (dedupe by event id) and wrap each local state
     change in a single DB transaction.
-- **Progress:** TODO
+- **Progress:** DONE
 - **Blocker:** None
+- **Outcome:** `POST /orders` validates, persists `CREATED`, emits `OrderCreated`,
+  returns `202 {order_id,status}` (404 if user has no portfolio). Background
+  consumer (group `portfolio-service`, topics `price-quoted` + `order-rejected`,
+  dispatched by topic) handles the saga in `saga.rs` + `repo.rs`:
+  `apply_price_quoted` runs one transaction that (a) dedupes via `processed_events`
+  (new `0002` migration), (b) loads the order `FOR UPDATE` and only acts if
+  `CREATED`, (c) **BUY** locks the portfolio row, deducts cash + adds asset if
+  affordable else marks REJECTED(InsufficientBalance); **SELL** locks the holding,
+  deducts asset + adds cash if held else REJECTED(InsufficientAsset); then emits
+  `OrderExecuted`/`OrderRejected` after commit. `apply_order_rejected` marks a
+  still-`CREATED` order REJECTED (Market-originated), idempotently.
+- **Decisions:** (1) **No intake cash reservation** — market orders have no price
+  at intake, so consistency is enforced by `SELECT … FOR UPDATE` row locks at
+  execution (prevents double-spend); `reserved_cash` stays 0 and compensation is a
+  clean no-op. (2) Idempotency = `processed_events(event_id)` **plus** an order
+  status guard, both inside the txn. (3) Known limitation: emit-after-commit has a
+  small gap (no transactional outbox) — acceptable at this scope, noted for prod.
+- **Verified:** build + clippy `-D warnings` clean; full E2E with both services on
+  live infra — BUY 2 ETH ✅ EXECUTED, SELL 0.5 BTC ✅ EXECUTED, BUY 10 BTC ✅
+  REJECTED(insufficient balance), SELL 10 SOL ✅ REJECTED(insufficient asset), BUY
+  ZZZ ✅ REJECTED(unknown symbol, from Market); final balances exact
+  (cash 124441, BTC 0.5, ETH 2.0); replaying a `PriceQuoted` for an executed order
+  left state unchanged (idempotent).
 
 ## 10. Optional: Audit Service
 
