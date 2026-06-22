@@ -31,8 +31,17 @@ Each task has four sections:
   Put connection settings in an `.env` file. (Application service containers are
   added later in Task 12 — this task is infrastructure only.) Verify both Postgres
   and Kafka are reachable from the host.
-- **Progress:** TODO
+- **Progress:** DONE
 - **Blocker:** None
+- **Outcome:** `docker-compose.yml` brings up `postgres` (16-alpine), `kafka`
+  (`apache/kafka:3.7.0`, KRaft single-node, INTERNAL `kafka:9092` / EXTERNAL
+  `localhost:9094`), a `kafka-init` one-shot that creates topics
+  (`order-created`, `price-quoted`, `order-executed`, `order-rejected`), plus
+  `kafka-ui` (:8080) and `adminer` (:8081). Settings live in `.env`
+  (`.env.example` committed). Verified: Postgres healthy + accepts connections,
+  Kafka healthy + produce→consume round-trip succeeds, topics created.
+  Note: switched off Bitnami images (deprecated/removed from Docker Hub) to the
+  official `apache/kafka` image.
 
 ## 2. Initialize codebase & workspace
 
