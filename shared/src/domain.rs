@@ -51,6 +51,29 @@ pub enum Side {
     Sell,
 }
 
+impl Side {
+    /// Canonical string form, as stored in the DB and on the wire.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Side::Buy => "BUY",
+            Side::Sell => "SELL",
+        }
+    }
+}
+
+impl std::str::FromStr for Side {
+    type Err = AppError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "BUY" => Ok(Side::Buy),
+            "SELL" => Ok(Side::Sell),
+            other => Err(AppError::Internal(anyhow::anyhow!(
+                "invalid side {other:?}"
+            ))),
+        }
+    }
+}
+
 /// Lifecycle status of an order as it moves through the saga.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
@@ -63,6 +86,33 @@ pub enum OrderStatus {
     Executed,
     /// Terminated without execution (see [`RejectionReason`]).
     Rejected,
+}
+
+impl OrderStatus {
+    /// Canonical string form, as stored in the DB and on the wire.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            OrderStatus::Created => "CREATED",
+            OrderStatus::Priced => "PRICED",
+            OrderStatus::Executed => "EXECUTED",
+            OrderStatus::Rejected => "REJECTED",
+        }
+    }
+}
+
+impl std::str::FromStr for OrderStatus {
+    type Err = AppError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "CREATED" => Ok(OrderStatus::Created),
+            "PRICED" => Ok(OrderStatus::Priced),
+            "EXECUTED" => Ok(OrderStatus::Executed),
+            "REJECTED" => Ok(OrderStatus::Rejected),
+            other => Err(AppError::Internal(anyhow::anyhow!(
+                "invalid order status {other:?}"
+            ))),
+        }
+    }
 }
 
 /// Why an order was rejected. Some reasons originate in the Market Service,
@@ -170,6 +220,24 @@ mod tests {
             serde_json::to_string(&RejectionReason::InsufficientBalance).unwrap(),
             "\"INSUFFICIENT_BALANCE\""
         );
+    }
+
+    #[test]
+    fn side_and_status_str_roundtrip() {
+        use std::str::FromStr;
+        for s in [Side::Buy, Side::Sell] {
+            assert_eq!(Side::from_str(s.as_str()).unwrap(), s);
+        }
+        for s in [
+            OrderStatus::Created,
+            OrderStatus::Priced,
+            OrderStatus::Executed,
+            OrderStatus::Rejected,
+        ] {
+            assert_eq!(OrderStatus::from_str(s.as_str()).unwrap(), s);
+        }
+        assert!(Side::from_str("buy").is_err());
+        assert!(OrderStatus::from_str("DONE").is_err());
     }
 
     #[test]

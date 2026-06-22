@@ -220,8 +220,18 @@ Each task has four sections:
 - **Solution:** Implement `GET /portfolio/{userId}` (cash balance + holdings)
   and `GET /orders/{orderId}` (order with current saga status). Back them with
   the Postgres schema from Task 5. Seed at least one demo user with starting cash.
-- **Progress:** TODO
+- **Progress:** DONE
 - **Blocker:** None
+- **Outcome:** `GET /portfolio/{user_id}` (cash + non-zero holdings, 404 if no
+  such user) and `GET /orders/{order_id}` (full order incl. status/price/reason,
+  404 if none); invalid UUIDs → 400 (axum). Added a `repo` module using sqlx
+  runtime-checked queries (`query_scalar`/`query_as` + `FromRow` row→domain
+  mapping — no compile-time DB needed) and `seed_demo` (idempotent: demo user
+  `11111111-…-1111` with 100000.00 cash + 1.0 BTC holding), run on startup.
+  Added reusable `Side`/`OrderStatus` `as_str()` + `FromStr` in `shared::domain`
+  (also for Task 9 writes). Verified: build + clippy `-D warnings` clean; 8 shared
+  tests pass; demo portfolio, 404s, 400, `/ready`, and a seeded `/orders/{id}`
+  (row→domain mapping) all return expected results.
 
 ## 9. Implement order intake & the choreographed saga (Portfolio Service)
 
