@@ -55,8 +55,74 @@ producing/consuming Kafka events, inspecting Postgres) rather than only compilin
 
 ## What was accepted vs. modified
 
-<!-- To be completed after manual review/testing. -->
+The large majority of the AI's output was **accepted as written** — the workspace
+and service layout, the domain/Kafka event schemas, the order saga state machine,
+the Kafka producer/consumer wrapper, the SQL migrations, and the tests all went in
+essentially unchanged. This was possible because every task was verified against
+live infrastructure (real REST calls, real Kafka produce/consume, inspecting
+Postgres) before moving on, so issues were caught early.
+
+The **modifications** were targeted corrections surfaced during that verification
+and during manual review — not rewrites:
+
+- **`AppError` → HTTP mapping (modified).** The first version masked the body of
+  _every_ 5xx response as `"internal server error"`, which also hid the useful
+  detail on `503 Service Unavailable`. Narrowed it to mask only the `Internal`/500
+  variant. (Detailed below.)
+- **Adminer host port (modified).** Compose first mapped Adminer to `8081`, which
+  collides with the Market Service. Caught when `make infra-up` + `make market`
+  made `GET /symbols` return Adminer's HTML. Moved Adminer to `8085`.
+- **Kafka image (modified).** `docker-compose.yml` initially used `bitnami/kafka`,
+  which has been removed from Docker Hub; switched to the official `apache/kafka`
+  (KRaft) image.
+- **GUIDELINE SELL scenario (modified, user-requested).** The walkthrough assumed
+  the pristine demo balance, but the database persists across runs, so a
+  documented `SELL 0.5 BTC` could fail once earlier trades had reduced the holding.
+  Added a "reset to pristine state" note and a "sell within your holdings" caveat.
 
 ## Example of incorrect AI output and how it was handled
 
-<!-- To be completed after manual review/testing. -->
+**Where:** the shared HTTP error type (`shared/src/error.rs`).
+
+**Symptom.** While verifying the Market Service, requesting a symbol whose pricing
+was forced unavailable returned the right status but the wrong body — the real
+reason had been swallowed:
+
+```
+GET /prices/ETH   (with MARKET_FAIL_SYMBOLS=ETH)
+HTTP/1.1 503 Service Unavailable
+{"error":"internal server error"}
+```
+
+**Root cause.** The AI's first `IntoResponse` implementation masked the message for
+_any_ server-error status:
+
+```rust
+if status.is_server_error() {
+    return (status, Json(json!({ "error": "internal server error" }))).into_response();
+}
+```
+
+`AppError::Unavailable` maps to `503`, which is a 5xx, so its safe and useful
+detail (`"market unavailable for ETH"`) was hidden along with genuine `500`s.
+
+**How it was handled.** I caught it by actually exercising the endpoint (not just
+compiling), then narrowed the masking to only the `Internal` variant — which may
+wrap sensitive detail and is logged server-side — and let every other variant
+(including `503`) surface its message:
+
+```rust
+let message = match &self {
+    AppError::Internal(e) => {
+        tracing::error!(error = %e, "request failed");
+        "internal server error".to_string()
+    }
+    other => other.to_string(),
+};
+(self.status(), Json(json!({ "error": message }))).into_response()
+```
+
+**Verification.** Re-running the request returned
+`503 {"error":"market unavailable for ETH"}`, while a genuine `Internal` error
+still returns only the generic `500` message. This also improved the saga's
+`MARKET_UNAVAILABLE` rejection path, where that detail is meaningful.
