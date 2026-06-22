@@ -24,8 +24,7 @@ use shared::{db, http, telemetry, AppError, AppResult};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-mod repo;
-mod saga;
+use portfolio_service::{repo, saga};
 
 /// Shared state for HTTP handlers: DB pool + Kafka producer.
 #[derive(Clone)]

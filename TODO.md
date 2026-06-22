@@ -309,8 +309,23 @@ Each task has four sections:
   handling (Market emits `OrderRejected` / is unavailable), and correct portfolio
   updates after trades. Use a test Postgres and a real or embedded Kafka
   (e.g. testcontainers) and assert eventual state, since execution is asynchronous.
-- **Progress:** TODO
+- **Progress:** DONE
 - **Blocker:** None
+- **Outcome:** Three layers. (1) **Unit tests** (`cargo test`, no infra): `shared`
+  domain/serde/validation ×8, market `PriceEngine` ×2. (2) **DB integration tests**
+  — refactored portfolio-service into lib+bin so `repo`/`saga` are testable;
+  `tests/saga_db.rs` (6 tests, `#[ignore]`, against the `portfolio_test` DB added
+  to compose `db-init`) deterministically covers BUY execute + portfolio debit/credit,
+  SELL execute + credit/debit, insufficient balance (REJECTED, state untouched),
+  insufficient asset (REJECTED), market-failure handling (incoming `OrderRejected`
+  marks a CREATED order REJECTED), and idempotent replay (same event_id + status
+  guard). (3) **End-to-end** `scripts/e2e.sh` — boots infra + all three services
+  and asserts every order's terminal state over real Kafka: successful BUY/SELL,
+  insufficient balance/asset, unknown symbol, and **market unavailable** (via
+  `MARKET_FAIL_SYMBOLS=DOGE`), plus the audit trail (ORDER_CREATED/PRICE_QUOTED/
+  ORDER_EXECUTED). Verified: `cargo test` (10 pass, 6 ignored); `cargo test -p
+portfolio-service -- --ignored` (6 pass); `scripts/e2e.sh` all green; clippy
+  `-D warnings` clean across all targets incl. tests.
 
 ## 12. Containerize the services & full end-to-end Compose
 
