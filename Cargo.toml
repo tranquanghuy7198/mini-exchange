@@ -26,3 +26,8 @@ anyhow = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tower-http = { version = "0.6", features = ["trace"] }
+# Domain / event-schema building blocks (Task 4). sqlx feature flags for these
+# (rust_decimal/uuid/chrono) get enabled when sqlx is added in Task 5.
+rust_decimal = { version = "1", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }

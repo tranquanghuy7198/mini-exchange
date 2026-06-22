@@ -115,8 +115,21 @@ Each task has four sections:
   compensation events). Each event carries an `order_id`/correlation id, version,
   and timestamp. Derive `serde` and decide serialization (JSON to start). Document
   which service produces/consumes each event and on which topic.
-- **Progress:** TODO
+- **Progress:** DONE
 - **Blocker:** None
+- **Outcome:** Added `rust_decimal` (money/qty — no floats), `uuid` (ids),
+  `chrono` (UTC timestamps). `shared::domain`: `Symbol` (normalized upper-case
+  newtype), `Side` (BUY/SELL), `OrderStatus` (CREATED/PRICED/EXECUTED/REJECTED),
+  `RejectionReason` (SCREAMING_SNAKE), `Price`, `Holding`, `Portfolio`, `Order`,
+  and `NewOrder` (POST body) with `validate()` (positive qty / non-empty symbol).
+  `shared::events`: generic `EventEnvelope<T>` (event_id for idempotency,
+  order_id correlation = Kafka key, version, occurred_at), payloads
+  `OrderCreated`/`PriceQuoted`/`OrderExecuted`/`OrderRejected`, a `SagaEvent`
+  trait binding each payload to its `TOPIC`/`EVENT_TYPE`, `topics` constants
+  (matching Task 1's `kafka-init`), and per-type envelope aliases. JSON
+  serialization. Producer/consumer/topic map documented in the `events` module
+  docs. Verified: 7 `shared` unit tests (serde round-trips, topic mapping,
+  validation) pass; build + clippy `-D warnings` clean.
 
 ## 5. Connect to Postgres
 
