@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = [
+    "shared",
+    "market-service",
+    "portfolio-service",
+    "audit-service",
+]
+
+# Shared metadata inherited by member crates via `*.workspace = true`.
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+# Central dependency versions. Member crates opt in with
+# `<dep>.workspace = true` so versions stay consistent across services.
+# (Concrete deps — axum, tokio, sqlx, rdkafka, serde, … — are wired up in
+# later tasks; kept empty here so the skeleton stays minimal.)
+[workspace.dependencies]

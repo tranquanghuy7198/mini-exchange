@@ -71,8 +71,15 @@ Each task has four sections:
   library crate for types, errors, and Kafka helpers. Add `.gitignore`, pin a
   Rust toolchain (`rust-toolchain.toml`), and confirm `cargo build` succeeds on
   an empty skeleton.
-- **Progress:** TODO
+- **Progress:** DONE
 - **Blocker:** None
+- **Outcome:** Cargo workspace (`resolver = "2"`) with members `shared`,
+  `market-service`, `portfolio-service`, `audit-service`. Each service is a bin
+  crate depending on `shared` (path dep). Workspace-level `[workspace.package]`
+  (version/edition 2021/license) and an empty `[workspace.dependencies]` table
+  for centralizing versions in later tasks. Pinned `rust-toolchain.toml`
+  (stable 1.95.0, rustfmt + clippy). `.gitignore` now ignores `/target`.
+  Verified: `cargo build` compiles all four crates; each service binary runs.
 
 ## 3. Choose the web/HTTP stack & shared scaffolding
 
